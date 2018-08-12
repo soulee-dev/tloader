@@ -1,8 +1,13 @@
 import base64
 from io import BytesIO
 import sys
+import os
 from PIL import Image
 from selenium import webdriver
+
+if not(os.path.exists("chromedriver.exe")):
+    print("no chromedriver")
+    sys.exit(1)
 
 options = webdriver.ChromeOptions()
 options.add_argument("--test-type")
@@ -12,6 +17,7 @@ driver = webdriver.Chrome("chromedriver.exe", chrome_options=options)
 def decode_img(img_data, filename):
     splited = img_data.split(',')[1]
     im = Image.open(BytesIO(base64.b64decode(splited)))
+    print("Saving image " + filename + ".png   ...")
     im.save(filename + ".png")
 
 def inition(uri):
@@ -22,10 +28,19 @@ def getimage(imgid, filename):
     decode_img(base64, filename)
 
 i = 0
-inition(sys.argv[1])
+try:
+    inition(sys.argv[1])
+except:
+    print("no arguments")
+    driver.quit()
+    sys.exit(1)
+
 while(1):
     try:
-        getimage("content_image_" + str(i), "tmp/" + str(i))
+        getimage("content_image_" + str(i), "tmp/" + str(i+1))
         i = i + 1
     except:
         break
+        print('done!')
+        driver.quit()
+        sys.exit(0)
