@@ -1,11 +1,11 @@
 import base64
-from io import BytesIO
 import sys
-import os
+from io import BytesIO
+from os import path
 from PIL import Image
 from selenium import webdriver
 
-if not(os.path.exists("chromedriver.exe")):
+if not path.exists("chromedriver.exe"):
     print("no chromedriver")
     sys.exit(1)
 
@@ -40,7 +40,6 @@ while(1):
         getimage("content_image_" + str(i), "tmp/" + str(i+1))
         i = i + 1
     except:
-        break
         print('done!')
         driver.quit()
         sys.exit(0)
