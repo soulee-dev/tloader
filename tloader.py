@@ -1,11 +1,11 @@
 #tLoader for naver webtoon 2018-08-13
 #By lill74
 
+import os
 import sys
 import base64
-import os
-from io import BytesIO
 from PIL import Image
+from io import BytesIO
 from selenium import webdriver
 
 title = ""
@@ -29,7 +29,6 @@ options.add_argument("--disable-web-security")
 
 driver = webdriver.Chrome("chromedriver.exe", chrome_options=options)
 
-
 def progress(val, total, status=''):
     bar_len = 60
     filled_len = int(round(bar_len * val / float(total)))
@@ -47,13 +46,12 @@ def decodeImg(b64data, fname):
         os.makedirs(fpath)
 
     img = Image.open(BytesIO(base64.b64decode(b64data.split(',')[1])))
-    progress(count + 1, maxpg, "(" + str(count) + "/" + str(maxpg) + ")")
+    progress(count + 1, maxpg, "(" + str(count) + " / " + str(maxpg) + ")")
     img.save(fname + ".png")
 
 def getimg(imgid, fname):
     b64data = driver.execute_script("var c = document.createElement('canvas'); var ctx = c.getContext('2d'); var img = document.getElementById('" + imgid + "'); c.height=img.height; c.width=img.width; ctx.drawImage(img, 0, 0,img.width, img.height); var base64String = c.toDataURL(); return base64String;")
     decodeImg(b64data, fname)
-
 
 def getpage(uri):
     global title
@@ -79,19 +77,22 @@ def getpage(uri):
         getimg("content_image_" + str(i), fpath + "\\" + str(i + 1))
 
     print("\nDone!")
+    driver.close()
 
-if(len(sys.argv) == 2): #uri format https://comic.naver.com/webtoon/detail.nhn?titleId=622644&no=171
+if(len(sys.argv) == 2):
     getpage(sys.argv[1])
 elif(len(sys.argv) == 3):
     splited = sys.argv[2].split("-")
-    if(len(splited) == 1): #uri format https://comic.naver.com/webtoon/detail.nhn?titleId=622644&no=
+    if(len(splited) == 1):
         getpage(sys.argv[1] + sys.argv[2])
     elif(len(splited) == 2):
         for i in range(int(splited[0]), int(splited[1]) + 1):
             getpage(sys.argv[1] + str(i))
     else:
         print("argument error")
+        driver.quit()
         sys.exit(1)
 else:
     print("argument error")
+    driver.quit()
     sys.exit(1)
