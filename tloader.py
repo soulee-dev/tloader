@@ -1,45 +1,84 @@
-import base64
+#tLoader for naver webtoon 2018-08-13
+#By lill74
+
 import sys
+import base64
+import os
 from io import BytesIO
-from os import path
 from PIL import Image
 from selenium import webdriver
 
-if not path.exists("chromedriver.exe"):
+title = ""
+subtitle = ""
+author = ""
+fpath = ""
+maxpg = 0
+count = 0
+
+if not os.path.exists("chromedriver.exe"):
     print("no chromedriver")
+    sys.exit(1)
+
+if len(sys.argv) <= 1:
+    print("no arguments")
     sys.exit(1)
 
 options = webdriver.ChromeOptions()
 options.add_argument("--test-type")
 options.add_argument("--disable-web-security")
+
 driver = webdriver.Chrome("chromedriver.exe", chrome_options=options)
 
-def decode_img(img_data, filename):
-    splited = img_data.split(',')[1]
-    im = Image.open(BytesIO(base64.b64decode(splited)))
-    print("Saving image " + filename + ".png   ...")
-    im.save(filename + ".png")
 
-def inition(uri):
+def progress(val, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * val / float(total)))
+
+    percents = round(100.0 * val / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ... %s\r' % (bar, percents, '%', status))
+    sys.stdout.flush()  # As suggested by Rom Ruben (see: http://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console/27871113#comment50529068_27871113)
+
+def decodeImg(b64data, fname):
+    if not os.path.exists(fpath):
+        print("Creating directories")
+        print(fpath)
+        os.makedirs(fpath)
+
+    img = Image.open(BytesIO(base64.b64decode(b64data.split(',')[1])))
+    progress(count + 1, maxpg, "(" + str(count) + "/" + str(maxpg) + ")")
+    img.save(fname + ".png")
+
+def getimg(imgid, fname):
+    b64data = driver.execute_script("var c = document.createElement('canvas'); var ctx = c.getContext('2d'); var img = document.getElementById('" + imgid + "'); c.height=img.height; c.width=img.width; ctx.drawImage(img, 0, 0,img.width, img.height); var base64String = c.toDataURL(); return base64String;")
+    decodeImg(b64data, fname)
+
+#uri format https://comic.naver.com/webtoon/detail.nhn?titleId=622644&no=171
+def getpage(uri):
+    global title
+    global subtitle
+    global author
+    global fpath
+    global maxpg
+    global count
+
     driver.get(uri)
 
-def getimage(imgid, filename):
-    base64 = driver.execute_script("var c = document.createElement('canvas'); var ctx = c.getContext('2d'); var img = document.getElementById('" + imgid + "'); c.height=img.height; c.width=img.width; ctx.drawImage(img, 0, 0,img.width, img.height); var base64String = c.toDataURL(); return base64String;")
-    decode_img(base64, filename)
+    tmptitle = driver.find_element_by_class_name("detail").find_element_by_tag_name("h2")
+    maxpg = len(driver.find_element_by_class_name("wt_viewer").find_elements_by_tag_name("img"))
+    author = tmptitle.find_element_by_tag_name("span").text
+    title = tmptitle.text.replace(" " + author , "")
+    subtitle = driver.find_element_by_class_name("view").find_element_by_tag_name("h3").text
+    fpath = title + "\\" + subtitle
 
-i = 0
-try:
-    inition(sys.argv[1])
-except:
-    print("no arguments")
+    print(title + " " + subtitle)
+
+    for i in range(0, maxpg):
+        count = i
+        getimg("content_image_" + str(i), fpath + "\\" + str(i + 1))
+
+    print("Done!")
     driver.quit()
-    sys.exit(1)
 
-while(1):
-    try:
-        getimage("content_image_" + str(i), "tmp/" + str(i+1))
-        i = i + 1
-    except:
-        print('done!')
-        driver.quit()
-        sys.exit(0)
+getpage(sys.argv[1])
