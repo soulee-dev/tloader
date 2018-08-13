@@ -1,19 +1,21 @@
 #tLoader for naver webtoon 2018-08-13
 #By lill74
 
+import os
 import sys
 import base64
-import os
+import multiprocessing
 from io import BytesIO
 from PIL import Image
 from selenium import webdriver
 
 title = ""
+fpath = ""
 subtitle = ""
 author = ""
-fpath = ""
-maxpg = 0
+
 count = 0
+maxpg = 0
 
 if not os.path.exists("chromedriver.exe"):
     print("no chromedriver")
@@ -24,36 +26,24 @@ if len(sys.argv) <= 1:
     sys.exit(1)
 
 options = webdriver.ChromeOptions()
+#options.add_argument('headless')
 options.add_argument("--test-type")
 options.add_argument("--disable-web-security")
 
 driver = webdriver.Chrome("chromedriver.exe", chrome_options=options)
 
-
-def progress(val, total, status=''):
-    bar_len = 60
-    filled_len = int(round(bar_len * val / float(total)))
-
-    percents = round(100.0 * val / float(total), 1)
-    bar = '=' * filled_len + '-' * (bar_len - filled_len)
-
-    sys.stdout.write('[%s] %s%s ... %s\r' % (bar, percents, '%', status))
-    sys.stdout.flush()
-
 def decodeImg(b64data, fname):
     if not os.path.exists(fpath):
         print("Creating directories")
-        print(fpath)
         os.makedirs(fpath)
 
     img = Image.open(BytesIO(base64.b64decode(b64data.split(',')[1])))
-    progress(count + 1, maxpg, "(" + str(count) + "/" + str(maxpg) + ")")
+    print(title + " " + subtitle + " Saving  .. (" + str(count) + " / " + str(maxpg) + ")" )
     img.save(fname + ".png")
 
 def getimg(imgid, fname):
     b64data = driver.execute_script("var c = document.createElement('canvas'); var ctx = c.getContext('2d'); var img = document.getElementById('" + imgid + "'); c.height=img.height; c.width=img.width; ctx.drawImage(img, 0, 0,img.width, img.height); var base64String = c.toDataURL(); return base64String;")
     decodeImg(b64data, fname)
-
 
 def getpage(uri):
     global title
@@ -61,7 +51,6 @@ def getpage(uri):
     global author
     global fpath
     global maxpg
-    global count
 
     driver.get(uri)
 
@@ -75,23 +64,44 @@ def getpage(uri):
     print(title + " " + subtitle)
 
     for i in range(0, maxpg):
+        global count
+
         count = i
         getimg("content_image_" + str(i), fpath + "\\" + str(i + 1))
 
-    print("\nDone!")
+    print(title + " " + subtitle + " Done!")
+    driver.close()
 
-if(len(sys.argv) == 2): #uri format https://comic.naver.com/webtoon/detail.nhn?titleId=622644&no=171
-    getpage(sys.argv[1])
-elif(len(sys.argv) == 3):
-    splited = sys.argv[2].split("-")
-    if(len(splited) == 1): #uri format https://comic.naver.com/webtoon/detail.nhn?titleId=622644&no=
-        getpage(sys.argv[1] + sys.argv[2])
-    elif(len(splited) == 2):
-        for i in range(int(splited[0]), int(splited[1]) + 1):
-            getpage(sys.argv[1] + str(i))
+def main():
+    if(len(sys.argv) == 2):
+        getpage(sys.argv[1])
+    elif(len(sys.argv) == 3):
+        splited = sys.argv[2].split("-")
+        if(len(splited) == 1):
+            getpage(sys.argv[1] + sys.argv[2])
+        elif(len(splited) == 2):
+            for j in range(int(splited[0]), int(splited[1]) + 1):
+                proc = multiprocessing.Process(target=getpage, args=((sys.argv[1] + str(j)),))
+                proc.start()
+
+                if int(j%5) == 0:
+                    proc.join()
+                
+        else:
+            print("argument error")
+            driver.quit()
+            sys.exit(1)
     else:
         print("argument error")
+        driver.quit()
         sys.exit(1)
-else:
-    print("argument error")
-    sys.exit(1)
+
+    driver.quit()
+    sys.exit(0)
+
+
+def rt(dd):
+    return dd
+
+if __name__ == "__main__":
+    main()
