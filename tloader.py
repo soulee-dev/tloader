@@ -77,7 +77,6 @@ def getpage(uri):
         getimg("content_image_" + str(i), fpath + "\\" + str(i + 1))
 
     print("\nDone!")
-    driver.close()
 
 if(len(sys.argv) == 2):
     getpage(sys.argv[1])
@@ -87,6 +86,7 @@ elif(len(sys.argv) == 3):
         getpage(sys.argv[1] + sys.argv[2])
     elif(len(splited) == 2):
         for i in range(int(splited[0]), int(splited[1]) + 1):
+            print(sys.argv[1] + str(i))
             getpage(sys.argv[1] + str(i))
     else:
         print("argument error")
