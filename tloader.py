@@ -68,7 +68,7 @@ def getpage(uri):
     author = tmptitle.find_element_by_tag_name("span").text
     title = tmptitle.text.replace(" " + author , "")
     subtitle = driver.find_element_by_class_name("view").find_element_by_tag_name("h3").text
-    fpath = title + "\\" + subtitle
+    fpath = "out\\" + title + "\\" + subtitle
 
     print(title + " " + subtitle)
 
