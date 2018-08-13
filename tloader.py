@@ -38,7 +38,7 @@ def progress(val, total, status=''):
     bar = '=' * filled_len + '-' * (bar_len - filled_len)
 
     sys.stdout.write('[%s] %s%s ... %s\r' % (bar, percents, '%', status))
-    sys.stdout.flush()  # As suggested by Rom Ruben (see: http://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console/27871113#comment50529068_27871113)
+    sys.stdout.flush()
 
 def decodeImg(b64data, fname):
     if not os.path.exists(fpath):
@@ -54,7 +54,7 @@ def getimg(imgid, fname):
     b64data = driver.execute_script("var c = document.createElement('canvas'); var ctx = c.getContext('2d'); var img = document.getElementById('" + imgid + "'); c.height=img.height; c.width=img.width; ctx.drawImage(img, 0, 0,img.width, img.height); var base64String = c.toDataURL(); return base64String;")
     decodeImg(b64data, fname)
 
-#uri format https://comic.naver.com/webtoon/detail.nhn?titleId=622644&no=171
+
 def getpage(uri):
     global title
     global subtitle
@@ -78,7 +78,20 @@ def getpage(uri):
         count = i
         getimg("content_image_" + str(i), fpath + "\\" + str(i + 1))
 
-    print("Done!")
-    driver.quit()
+    print("\nDone!")
 
-getpage(sys.argv[1])
+if(len(sys.argv) == 2): #uri format https://comic.naver.com/webtoon/detail.nhn?titleId=622644&no=171
+    getpage(sys.argv[1])
+elif(len(sys.argv) == 3):
+    splited = sys.argv[2].split("-")
+    if(len(splited) == 1): #uri format https://comic.naver.com/webtoon/detail.nhn?titleId=622644&no=
+        getpage(sys.argv[1] + sys.argv[2])
+    elif(len(splited) == 2):
+        for i in range(int(splited[0]), int(splited[1]) + 1):
+            getpage(sys.argv[1] + str(i))
+    else:
+        print("argument error")
+        sys.exit(1)
+else:
+    print("argument error")
+    sys.exit(1)
