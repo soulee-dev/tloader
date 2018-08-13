@@ -41,8 +41,6 @@ def progress(val, total, status=''):
 
 def decodeImg(b64data, fname):
     if not os.path.exists(fpath):
-        print("Creating directories")
-        print(fpath)
         os.makedirs(fpath)
 
     img = Image.open(BytesIO(base64.b64decode(b64data.split(',')[1])))
@@ -78,21 +76,28 @@ def getpage(uri):
 
     print("\nDone!")
 
-if(len(sys.argv) == 2):
-    getpage(sys.argv[1])
-elif(len(sys.argv) == 3):
-    splited = sys.argv[2].split("-")
-    if(len(splited) == 1):
-        getpage(sys.argv[1] + sys.argv[2])
-    elif(len(splited) == 2):
-        for i in range(int(splited[0]), int(splited[1]) + 1):
-            print(sys.argv[1] + str(i))
-            getpage(sys.argv[1] + str(i))
+def main():
+    if(len(sys.argv) == 2):
+        getpage(sys.argv[1])
+    elif(len(sys.argv) == 3):
+        splited = sys.argv[2].split("-")
+        if(len(splited) == 1):
+            getpage(sys.argv[1] + sys.argv[2])
+        elif(len(splited) == 2):
+            for i in range(int(splited[0]), int(splited[1]) + 1):
+                print(sys.argv[1] + str(i))
+                getpage(sys.argv[1] + str(i))
+        else:
+            print("argument error")
+            driver.quit()
+            sys.exit(1)
     else:
         print("argument error")
         driver.quit()
         sys.exit(1)
-else:
-    print("argument error")
-    driver.quit()
-    sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+    
+driver.quit()
+sys.exit(0)
